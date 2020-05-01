@@ -24,17 +24,17 @@ software="awstats bc bind bind-libs bind-utils clamav-server clamav-update curl
     dovecot e2fsprogs exim expect fail2ban flex freetype ftp GeoIP httpd
     ImageMagick iptables-services jwhois lsof mailx mariadb mariadb-server
     mc mod_fcgid mod_ruid2 mod_ssl net-tools bx-nginx ntp openssh-clients
-    pcre php${php_version} php-${php_version}-php-bcmath php-${php_version}-php-cli
-    php-${php_version}-php-common php-${php_version}-php-fpm
-    php-${php_version}-php-gd php-${php_version}-php-imap
-    php-${php_version}-php-mbstring php-${php_version}-php-mcrypt
-    php-${php_version}-php-mysql php-${php_version}-php-pdo
-    php-${php_version}-php-pgsql php-${php_version}-php-soap
-    php-${php_version}-php-tidy php-${php_version}-php-xml
-    php-${php_version}-php-xmlrpc php-${php_version}-php-json
-    php-${php_version}-php-intl php-${php_version}-php-pecl-zip
-    php-${php_version}-php-opcache php-${php_version}-php-mysqlnd
-    php-${php_version}-php-pecl-imagick php-${php_version}-php-ldap
+    pcre php${php_version} php${php_version}-php-bcmath php${php_version}-php-cli
+    php${php_version}-php-common php${php_version}-php-fpm
+    php${php_version}-php-gd php${php_version}-php-imap
+    php${php_version}-php-mbstring php${php_version}-php-mcrypt
+    php${php_version}-php-mysql php${php_version}-php-pdo
+    php${php_version}-php-pgsql php${php_version}-php-soap
+    php${php_version}-php-tidy php${php_version}-php-xml
+    php${php_version}-php-xmlrpc php${php_version}-php-json
+    php${php_version}-php-intl php${php_version}-php-pecl-zip
+    php${php_version}-php-opcache php${php_version}-php-mysqlnd
+    php${php_version}-php-pecl-imagick php${php_version}-php-ldap
     phpMyAdmin phpPgAdmin postgresql postgresql-contrib
     postgresql-server proftpd roundcubemail rrdtool
     rsyslog screen spamassassin sqlite sudo tar telnet
@@ -466,6 +466,9 @@ if [ "$remi" = 'yes' ] && [ ! -e "/etc/yum.repos.d/remi.repo" ]; then
     rpm -Uvh http://rpms.remirepo.net/enterprise/remi-release-$release.rpm
     check_result $? "Can't install REMI repository"
     sed -i "s/enabled=0/enabled=1/g" /etc/yum.repos.d/remi.repo
+    
+    yum -y install http://rpms.remirepo.net/enterprise/remi-release-7.rpm 
+    yum -y install epel-release yum-utils
 fi
 
 # Installing Bitrix repository
@@ -477,7 +480,7 @@ echo "failovermethod=priority" >> $brepo
 echo "gpgcheck=1" >> $brepo
 echo "enabled=1" >> $brepo
 echo "gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-BITRIX" >> $brepo
-wget "http://repos.1c-bitrix.ru/yum/RPM-GPG-KEY-BitrixEnv" - O /etc/pki/rpm-gpg/RPM-GPG-KEY-BITRIX
+wget "http://repos.1c-bitrix.ru/yum/RPM-GPG-KEY-BitrixEnv" -O /etc/pki/rpm-gpg/RPM-GPG-KEY-BITRIX
 
 # Installing Vesta repository
 vrepo='/etc/yum.repos.d/vesta.repo'
@@ -580,7 +583,7 @@ if [ "$apache" = 'no' ]; then
     software=$(echo "$software" | sed -e "s/mod_ruid2//")
 fi
 if [ "$phpfpm" = 'no' ]; then
-    software=$(echo "$software" | sed -e "s/php-${php_version}-phpfpm//")
+    software=$(echo "$software" | sed -e "s/php${php_version}-phpfpm//")
 fi
 if [ "$vsftpd" = 'no' ]; then
     software=$(echo "$software" | sed -e "s/vsftpd//")
