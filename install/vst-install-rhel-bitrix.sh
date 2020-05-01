@@ -24,17 +24,17 @@ software="awstats bc bind bind-libs bind-utils clamav-server clamav-update curl
     dovecot e2fsprogs exim expect fail2ban flex freetype ftp GeoIP httpd
     ImageMagick iptables-services jwhois lsof mailx mariadb mariadb-server
     mc mod_fcgid mod_ruid2 mod_ssl net-tools bx-nginx ntp openssh-clients
-    pcre php php-${php_version}-phpbcmath php-${php_version}-phpcli
-    php-${php_version}-phpcommon php-${php_version}-phpfpm
-    php-${php_version}-phpgd php-${php_version}-phpimap
-    php-${php_version}-phpmbstring php-${php_version}-phpmcrypt
-    php-${php_version}-phpmysql php-${php_version}-phppdo
-    php-${php_version}-phppgsql php-${php_version}-phpsoap
-    php-${php_version}-phptidy php-${php_version}-phpxml
-    php-${php_version}-phpxmlrpc php-${php_version}-phpjson
-    php-${php_version}-phpintl php-${php_version}-phppecl-zip
-    php-${php_version}-phpopcache php-${php_version}-phpmysqlnd
-    php-${php_version}-phppecl-imagick php-${php_version}-phpldap
+    pcre php${php_version} php-${php_version}-php-bcmath php-${php_version}-php-cli
+    php-${php_version}-php-common php-${php_version}-php-fpm
+    php-${php_version}-php-gd php-${php_version}-php-imap
+    php-${php_version}-php-mbstring php-${php_version}-php-mcrypt
+    php-${php_version}-php-mysql php-${php_version}-php-pdo
+    php-${php_version}-php-pgsql php-${php_version}-php-soap
+    php-${php_version}-php-tidy php-${php_version}-php-xml
+    php-${php_version}-php-xmlrpc php-${php_version}-php-json
+    php-${php_version}-php-intl php-${php_version}-php-pecl-zip
+    php-${php_version}-php-opcache php-${php_version}-php-mysqlnd
+    php-${php_version}-php-pecl-imagick php-${php_version}-php-ldap
     phpMyAdmin phpPgAdmin postgresql postgresql-contrib
     postgresql-server proftpd roundcubemail rrdtool
     rsyslog screen spamassassin sqlite sudo tar telnet
@@ -773,6 +773,9 @@ if [ "$apache" = 'yes' ] && [ "$nginx"  = 'yes' ] ; then
     echo "PROXY_PORT='80'" >> $VESTA/conf/vesta.conf
     echo "PROXY_SSL_PORT='443'" >> $VESTA/conf/vesta.conf
     echo "STATS_SYSTEM='webalizer,awstats'" >> $VESTA/conf/vesta.conf
+    if [ "$phpfpm" = 'yes' ]; then
+        echo "WEB_BACKEND='php-fpm'" >> $VESTA/conf/vesta.conf
+    fi
 fi
 if [ "$apache" = 'no' ] && [ "$nginx"  = 'yes' ]; then
     echo "WEB_SYSTEM='nginx'" >> $VESTA/conf/vesta.conf
@@ -881,6 +884,9 @@ ip=$(ip addr|grep 'inet '|grep global|head -n1|awk '{print $2}'|cut -f1 -d/)
 if [ "$nginx" = 'yes' ]; then
     rm -f /etc/nginx/conf.d/*.conf
     cp -f $vestacp/nginx/nginx.conf /etc/nginx/
+    mkdir -p /etc/nginx/bx/conf/
+    mkdir -p /etc/nginx/bx/maps/
+    mkdir -p /etc/nginx/bx/settings/
     cp -f $vestacp/nginx/bx/maps/composite_settings.conf /etc/nginx/bx/maps/
     cp -f $vestacp/nginx/bx/maps/common_variables.conf /etc/nginx/bx/maps/
     cp -f $vestacp/nginx/bx/settings/rtc-im_settings.conf /etc/nginx/bx/settings/
