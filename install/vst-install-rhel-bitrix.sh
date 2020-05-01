@@ -923,6 +923,7 @@ fi
 #----------------------------------------------------------#
 
 if [ "$apache" = 'yes'  ]; then
+    mkdir -p /etc/httpd/bx/conf/
     cp -rf $vestacp/httpd/bx/ /etc/httpd/
     cp -f $vestacp/httpd/httpd.conf /etc/httpd/conf/
     cp -f $vestacp/httpd/status.conf /etc/httpd/conf.d/
