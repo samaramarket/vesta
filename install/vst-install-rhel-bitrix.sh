@@ -29,7 +29,7 @@ software="awstats bc bind bind-libs bind-utils clamav-server clamav-update curl
     php-json php-intl php-pecl-zip php-opcache php-mysqlnd php-pecl-imagick php-ldap
     phpMyAdmin phpPgAdmin postgresql postgresql-contrib postgresql-server
      proftpd roundcubemail rrdtool rsyslog screen spamassassin sqlite sudo tar telnet
-    unzip vesta vesta-ioncube vesta-nginx vesta-php vesta-softaculous
+    unzip vesta-ioncube vesta-nginx vesta-php vesta-softaculous
     vim-common vsftpd webalizer which zip catdoc xls2csv bx-push-server"
 
 # Fix for old releases
