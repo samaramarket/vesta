@@ -24,20 +24,11 @@ software="awstats bc bind bind-libs bind-utils clamav-server clamav-update curl
     dovecot e2fsprogs exim expect fail2ban flex freetype ftp GeoIP httpd
     ImageMagick iptables-services jwhois lsof mailx mariadb mariadb-server
     mc mod_fcgid mod_ruid2 mod_ssl net-tools bx-nginx ntp openssh-clients
-    pcre php${php_version} php${php_version}-php-bcmath php${php_version}-php-cli
-    php${php_version}-php-common php${php_version}-php-fpm
-    php${php_version}-php-gd php${php_version}-php-imap
-    php${php_version}-php-mbstring php${php_version}-php-mcrypt
-    php${php_version}-php-mysql php${php_version}-php-pdo
-    php${php_version}-php-pgsql php${php_version}-php-soap
-    php${php_version}-php-tidy php${php_version}-php-xml
-    php${php_version}-php-xmlrpc php${php_version}-php-json
-    php${php_version}-php-intl php${php_version}-php-pecl-zip
-    php${php_version}-php-opcache php${php_version}-php-mysqlnd
-    php${php_version}-php-pecl-imagick php${php_version}-php-ldap
-    phpMyAdmin phpPgAdmin postgresql postgresql-contrib
-    postgresql-server proftpd roundcubemail rrdtool
-    rsyslog screen spamassassin sqlite sudo tar telnet
+    pcre php php-bcmath php-cli php-common php-fpm php-gd php-imap php-mbstring
+    php-mcrypt php-mysql php-pdo php-pgsql php-soap php-tidy php-xml php-xmlrpc
+    php-json php-intl php-pecl-zip php-opcache php-mysqlnd php-pecl-imagick php-ldap
+    phpMyAdmin phpPgAdmin postgresql postgresql-contrib postgresql-server
+     proftpd roundcubemail rrdtool rsyslog screen spamassassin sqlite sudo tar telnet
     unzip vesta vesta-ioncube vesta-nginx vesta-php vesta-softaculous
     vim-common vsftpd webalizer which zip catdoc xls2csv bx-push-server"
 
@@ -464,11 +455,10 @@ check_result $? "Can't install EPEL repository"
 # Installing Remi repository
 if [ "$remi" = 'yes' ] && [ ! -e "/etc/yum.repos.d/remi.repo" ]; then
     rpm -Uvh http://rpms.remirepo.net/enterprise/remi-release-$release.rpm
-    check_result $? "Can't install REMI repository"
-    sed -i "s/enabled=0/enabled=1/g" /etc/yum.repos.d/remi.repo
-    
-    yum -y install http://rpms.remirepo.net/enterprise/remi-release-7.rpm 
+    check_result $? "Can't install REMI repository"  
     yum -y install epel-release yum-utils
+    yum-config-manager --enable remi-php$php_version
+
 fi
 
 # Installing Bitrix repository
@@ -583,7 +573,7 @@ if [ "$apache" = 'no' ]; then
     software=$(echo "$software" | sed -e "s/mod_ruid2//")
 fi
 if [ "$phpfpm" = 'no' ]; then
-    software=$(echo "$software" | sed -e "s/php${php_version}-phpfpm//")
+    software=$(echo "$software" | sed -e "s/php-fpm//")
 fi
 if [ "$vsftpd" = 'no' ]; then
     software=$(echo "$software" | sed -e "s/vsftpd//")
@@ -909,6 +899,9 @@ if [ "$nginx" = 'yes' ]; then
         echo "[Service]" > limits.conf
         echo "LimitNOFILE=500000" >> limits.conf
     fi
+    mkdir /etc/nginx/ssl/
+    openssl req  -nodes -new -x509  -keyout /etc/nginx/ssl/cert.key -out /etc/nginx/ssl/cert.crt -days 3650 -subj "/C=RU/ST=Moscow/L=Moscow/CN=$(hostname)"
+    openssl dhparam -dsaparam -out  /etc/nginx/ssl/dhparam.pem 4096
     chkconfig nginx on
     service nginx start
     check_result $? "nginx start failed"
@@ -984,8 +977,8 @@ fi
 #                     Configure PHP                        #
 #----------------------------------------------------------#
 
-cp -f $vestacp/php/10-opcache.ini /etc/opt/remi/php$php_version/php.d/10-opcache.ini
-cp -f $vestacp/php/php.ini /etc/logrotate.d/ /etc/opt/remi/php$php_version/php.ini
+cp -f $vestacp/php/10-opcache.ini /etc/php.d/10-opcache.ini
+cp -f $vestacp/php/php.ini /etc/logrotate.d/ /etc/php.ini
 
 ZONE=$(timedatectl 2>/dev/null|grep Timezone|awk '{print $2}')
 if [ -e '/etc/sysconfig/clock' ]; then
