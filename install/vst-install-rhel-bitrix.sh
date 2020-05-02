@@ -461,6 +461,15 @@ if [ "$remi" = 'yes' ] && [ ! -e "/etc/yum.repos.d/remi.repo" ]; then
 
 fi
 
+# Installing MariaDB repository
+mrepo="/etc/yum.repos.d/mariadb.repo"
+echo "[mariadb]" >> $mrepo
+echo "name = MariaDB" >> $mrepo
+echo "baseurl = http://yum.mariadb.org/10.4/centos7-amd64" >> $mrepo
+echo "gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-MARIADB" >> $mrepo
+echo "gpgcheck=1" >> $mrepo
+wget "https://yum.mariadb.org/RPM-GPG-KEY-MariaDB" -O /etc/pki/rpm-gpg/RPM-GPG-KEY-MARIADB
+
 # Installing Bitrix repository
 brepo="/etc/yum.repos.d/bitrix.repo"
 echo "[bitrix]" > $brepo
@@ -978,7 +987,7 @@ fi
 #----------------------------------------------------------#
 
 cp -f $vestacp/php/10-opcache.ini /etc/php.d/10-opcache.ini
-cp -f $vestacp/php/php.ini /etc/logrotate.d/ /etc/php.ini
+cp -f $vestacp/php/php.ini /etc/
 
 ZONE=$(timedatectl 2>/dev/null|grep Timezone|awk '{print $2}')
 if [ -e '/etc/sysconfig/clock' ]; then
