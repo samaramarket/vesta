@@ -47,7 +47,7 @@ help() {
   -a, --apache            Install Apache        [yes|no]  default: yes
   -n, --nginx             Install Nginx         [yes|no]  default: yes
   -w, --phpfpm            Install PHP-FPM       [yes|no]  default: no
-  -u, --pushserver       Install Push server   [yes|no]  default: yes
+  -u, --pushserver        Install Push server   [yes|no]  default: yes
   -v, --vsftpd            Install Vsftpd        [yes|no]  default: yes
   -j, --proftpd           Install ProFTPD       [yes|no]  default: no
   -k, --named             Install Bind          [yes|no]  default: yes
@@ -132,7 +132,7 @@ for arg; do
         --apache)               args="${args}-a " ;;
         --nginx)                args="${args}-n " ;;
         --phpfpm)               args="${args}-w " ;;
-        --pushserver)          args="${args}-u " ;;
+        --pushserver)           args="${args}-u " ;;
         --vsftpd)               args="${args}-v " ;;
         --proftpd)              args="${args}-j " ;;
         --named)                args="${args}-k " ;;
@@ -162,12 +162,12 @@ done
 eval set -- "$args"
 
 # Parsing arguments
-while getopts "a:n:w:v:j:k:m:g:d:x:z:c:t:i:b:r:o:q:l:y:s:e:p:fh" Option; do
+while getopts "a:n:w:u:v:j:k:m:g:d:x:z:c:t:i:b:r:o:q:l:y:s:e:p:fh" Option; do
     case $Option in
         a) apache=$OPTARG ;;            # Apache
         n) nginx=$OPTARG ;;             # Nginx
         w) phpfpm=$OPTARG ;;            # PHP-FPM
-        u) pushserver=$OPTARG ;;       # Push server
+        u) pushserver=$OPTARG ;;        # Push server
         v) vsftpd=$OPTARG ;;            # Vsftpd
         j) proftpd=$OPTARG ;;           # Proftpd
         k) named=$OPTARG ;;             # Named
