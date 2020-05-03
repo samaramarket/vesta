@@ -23,14 +23,14 @@ php_version="73"
 software="awstats bc bind bind-libs bind-utils clamav-server clamav-update curl
     dovecot e2fsprogs exim expect fail2ban flex freetype ftp GeoIP httpd
     ImageMagick iptables-services jwhois lsof mailx mariadb mariadb-server
-    mc mod_fcgid mod_ruid2 mod_ssl net-tools bx-nginx ntp openssh-clients
+    mc mod_fcgid mod_ruid2 mod_ssl net-tools nginx ntp openssh-clients
     pcre php php-bcmath php-cli php-common php-fpm php-gd php-imap php-mbstring
     php-mcrypt php-mysql php-pdo php-pgsql php-soap php-tidy php-xml php-xmlrpc
     php-json php-intl php-pecl-zip php-opcache php-mysqlnd php-pecl-imagick php-ldap
     phpMyAdmin phpPgAdmin postgresql postgresql-contrib postgresql-server
      proftpd roundcubemail rrdtool rsyslog screen spamassassin sqlite sudo tar telnet
     unzip vesta-ioncube vesta-nginx vesta-php vesta-softaculous
-    vim-common vsftpd webalizer which zip catdoc xls2csv bx-push-server"
+    vim-common vsftpd webalizer which zip catdoc xls2csv http-parser nodejs bx-push-server"
 
 # Fix for old releases
 if [ "$release" -lt 7 ]; then
@@ -47,6 +47,7 @@ help() {
   -a, --apache            Install Apache        [yes|no]  default: yes
   -n, --nginx             Install Nginx         [yes|no]  default: yes
   -w, --phpfpm            Install PHP-FPM       [yes|no]  default: no
+  -u, --pushserver       Install Push server   [yes|no]  default: yes
   -v, --vsftpd            Install Vsftpd        [yes|no]  default: yes
   -j, --proftpd           Install ProFTPD       [yes|no]  default: no
   -k, --named             Install Bind          [yes|no]  default: yes
@@ -131,6 +132,7 @@ for arg; do
         --apache)               args="${args}-a " ;;
         --nginx)                args="${args}-n " ;;
         --phpfpm)               args="${args}-w " ;;
+        --pushserver)          args="${args}-u " ;;
         --vsftpd)               args="${args}-v " ;;
         --proftpd)              args="${args}-j " ;;
         --named)                args="${args}-k " ;;
@@ -165,6 +167,7 @@ while getopts "a:n:w:v:j:k:m:g:d:x:z:c:t:i:b:r:o:q:l:y:s:e:p:fh" Option; do
         a) apache=$OPTARG ;;            # Apache
         n) nginx=$OPTARG ;;             # Nginx
         w) phpfpm=$OPTARG ;;            # PHP-FPM
+        u) pushserver=$OPTARG ;;       # Push server
         v) vsftpd=$OPTARG ;;            # Vsftpd
         j) proftpd=$OPTARG ;;           # Proftpd
         k) named=$OPTARG ;;             # Named
@@ -195,6 +198,7 @@ done
 set_default_value 'nginx' 'yes'
 set_default_value 'apache' 'yes'
 set_default_value 'phpfpm' 'no'
+set_default_value 'pushserver' 'yes'
 set_default_value 'vsftpd' 'yes'
 set_default_value 'proftpd' 'no'
 set_default_value 'named' 'yes'
@@ -310,7 +314,9 @@ fi
 if [ "$phpfpm"  = 'yes' ]; then
     echo '   - PHP-FPM Application Server'
 fi
-
+if [ "$pushserver"  = 'yes' ]; then
+    echo '   - Bitrix Push server'
+fi
 # DNS stack
 if [ "$named" = 'yes' ]; then
     echo '   - Bind DNS Server'
@@ -458,7 +464,6 @@ if [ "$remi" = 'yes' ] && [ ! -e "/etc/yum.repos.d/remi.repo" ]; then
     check_result $? "Can't install REMI repository"  
     yum -y install epel-release yum-utils
     yum-config-manager --enable remi-php$php_version
-
 fi
 
 # Installing MariaDB repository
@@ -470,16 +475,18 @@ echo "gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-MARIADB" >> $mrepo
 echo "gpgcheck=1" >> $mrepo
 wget "https://yum.mariadb.org/RPM-GPG-KEY-MariaDB" -O /etc/pki/rpm-gpg/RPM-GPG-KEY-MARIADB
 
-# Installing Bitrix repository
-brepo="/etc/yum.repos.d/bitrix.repo"
-echo "[bitrix]" > $brepo
-echo "name=\$OS \$releasever - \$basearch" >> $brepo
-echo "baseurl=http://repos.1c-bitrix.ru/yum/el/$release/\$basearch" >> $brepo
-echo "failovermethod=priority" >> $brepo
-echo "gpgcheck=1" >> $brepo
-echo "enabled=1" >> $brepo
-echo "gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-BITRIX" >> $brepo
-wget "http://repos.1c-bitrix.ru/yum/RPM-GPG-KEY-BitrixEnv" -O /etc/pki/rpm-gpg/RPM-GPG-KEY-BITRIX
+if [ "$pushserver"  = 'yes' ]; then
+    # Installing Bitrix repository
+    brepo="/etc/yum.repos.d/bitrix.repo"
+    echo "[bitrix]" > $brepo
+    echo "name=\$OS \$releasever - \$basearch" >> $brepo
+    echo "baseurl=http://repos.1c-bitrix.ru/yum/el/$release/\$basearch" >> $brepo
+    echo "failovermethod=priority" >> $brepo
+    echo "gpgcheck=1" >> $brepo
+    echo "enabled=1" >> $brepo
+    echo "gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-BITRIX" >> $brepo
+    wget "http://repos.1c-bitrix.ru/yum/RPM-GPG-KEY-BitrixEnv" -O /etc/pki/rpm-gpg/RPM-GPG-KEY-BITRIX
+fi
 
 # Installing Vesta repository
 vrepo='/etc/yum.repos.d/vesta.repo'
@@ -583,6 +590,9 @@ if [ "$apache" = 'no' ]; then
 fi
 if [ "$phpfpm" = 'no' ]; then
     software=$(echo "$software" | sed -e "s/php-fpm//")
+fi
+if [ "$pushserver"  = 'no' ]; then
+    software=$(echo "$software" | sed -e "s/http-parser nodejs bx-push-server//")
 fi
 if [ "$vsftpd" = 'no' ]; then
     software=$(echo "$software" | sed -e "s/vsftpd//")
@@ -764,6 +774,9 @@ if [ "$apache" = 'yes' ] && [ "$nginx" = 'no' ] ; then
     echo "WEB_SSL_PORT='443'" >> $VESTA/conf/vesta.conf
     echo "WEB_SSL='mod_ssl'"  >> $VESTA/conf/vesta.conf
     echo "STATS_SYSTEM='webalizer,awstats'" >> $VESTA/conf/vesta.conf
+fi
+if [ "$pushserver"  = 'yes' ]; then
+    echo "WEB_PUSH_SERVER='yes'" >> $VESTA/conf/vesta.conf
 fi
 if [ "$apache" = 'yes' ] && [ "$nginx"  = 'yes' ] ; then
     echo "WEB_SYSTEM='httpd'" >> $VESTA/conf/vesta.conf
@@ -981,6 +994,26 @@ if [ "$phpfpm" = 'yes' ]; then
     check_result $? "php-fpm start failed"
 fi
 
+#----------------------------------------------------------#
+#                     Configure Push-server                #
+#----------------------------------------------------------#
+
+if [ "$pushserver"  = 'yes' ]; then
+    usermod -a -G apache redis
+    userdel -r bitrix
+
+    cp -f $vestacp/redis/redis.conf /etc/
+    cp -f $vestacp/redis/custom.conf /etc/systemd/system/redis.service.d/
+    chkconfig redis on
+    service redis start
+    check_result $? "redis start failed"
+    
+    sed -E "s/USER=(.)+/USER=apache/g" -i /etc/sysconfig/push-server-multi
+    /etc/init.d/push-server-multi reset
+    chkconfig push-server-multi on
+    service push-server-multi start
+    check_result $? "push-server-multi start failed"
+fi
 
 #----------------------------------------------------------#
 #                     Configure PHP                        #
