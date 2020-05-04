@@ -50,14 +50,14 @@ help() {
   -u, --pushserver        Install Push server   [yes|no]  default: yes
   -v, --vsftpd            Install Vsftpd        [yes|no]  default: yes
   -j, --proftpd           Install ProFTPD       [yes|no]  default: no
-  -k, --named             Install Bind          [yes|no]  default: yes
+  -k, --named             Install Bind          [yes|no]  default: no
   -m, --mysql             Install MySQL         [yes|no]  default: yes
   -g, --postgresql        Install PostgreSQL    [yes|no]  default: no
   -d, --mongodb           Install MongoDB       [yes|no]  unsupported
   -x, --exim              Install Exim          [yes|no]  default: yes
-  -z, --dovecot           Install Dovecot       [yes|no]  default: yes
-  -c, --clamav            Install ClamAV        [yes|no]  default: yes
-  -t, --spamassassin      Install SpamAssassin  [yes|no]  default: yes
+  -z, --dovecot           Install Dovecot       [yes|no]  default: no
+  -c, --clamav            Install ClamAV        [yes|no]  default: no
+  -t, --spamassassin      Install SpamAssassin  [yes|no]  default: no
   -i, --iptables          Install Iptables      [yes|no]  default: yes
   -b, --fail2ban          Install Fail2ban      [yes|no]  default: yes
   -r, --remi              Install Remi repo     [yes|no]  default: yes
@@ -201,18 +201,18 @@ set_default_value 'phpfpm' 'no'
 set_default_value 'pushserver' 'yes'
 set_default_value 'vsftpd' 'yes'
 set_default_value 'proftpd' 'no'
-set_default_value 'named' 'yes'
+set_default_value 'named' 'no'
 set_default_value 'mysql' 'yes'
 set_default_value 'postgresql' 'no'
 set_default_value 'mongodb' 'no'
 set_default_value 'exim' 'yes'
-set_default_value 'dovecot' 'yes'
+set_default_value 'dovecot' 'no'
 if [ $memory -lt 1500000 ]; then
     set_default_value 'clamd' 'no'
     set_default_value 'spamd' 'no'
 else
-    set_default_value 'clamd' 'yes'
-    set_default_value 'spamd' 'yes'
+    set_default_value 'clamd' 'no'
+    set_default_value 'spamd' 'no'
 fi
 set_default_value 'iptables' 'yes'
 set_default_value 'fail2ban' 'yes'
@@ -988,7 +988,6 @@ fi
 #----------------------------------------------------------#
 
 if [ "$phpfpm" = 'yes' ]; then
-    cp -f $vestacp/php-fpm/www.conf /etc/php-fpm.d/
     chkconfig php-fpm on
     service php-fpm start
     check_result $? "php-fpm start failed"

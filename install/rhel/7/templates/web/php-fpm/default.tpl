@@ -1,5 +1,5 @@
 [%backend%]
-listen = 127.0.0.1:%backend_port%
+listen = /var/run/php73-fpm-%backend_port%.sock
 listen.allowed_clients = 127.0.0.1
 
 user = %user%

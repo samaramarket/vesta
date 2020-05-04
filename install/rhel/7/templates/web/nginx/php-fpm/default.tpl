@@ -7,36 +7,22 @@ server {
     access_log  /var/log/nginx/domains/%domain%.bytes bytes;
     error_log   /var/log/nginx/domains/%domain%.error.log error;
 
-    location / {
+    server_name_in_redirect off;
 
-        location ~* ^.+\.(jpeg|jpg|png|gif|bmp|ico|svg|css|js)$ {
-            expires     max;
-        }
+    proxy_set_header	X-Real-IP $remote_addr;
+    proxy_set_header	X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header	Host $host:80;
 
-        location ~ [^/]\.php(/|$) {
-            fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
-            if (!-f $document_root$fastcgi_script_name) {
-                return  404;
-            }
+    set $proxyserver    "http://127.0.0.1:8888";
+    set $imcontenttype	"text/html; charset=utf-8";
+    set $docroot		"%docroot%";
+    proxy_ignore_client_abort off;
 
-            fastcgi_pass    %backend_lsnr%;
-            fastcgi_index   index.php;
-            include         /etc/nginx/fastcgi_params;
-        }
-    }
+    # Redirect to ssl if need
+    if (-f %docroot%/.htsecure) { rewrite ^(.*)$ https://$host$1 permanent; }
 
-    error_page  403 /error/404.html;
-    error_page  404 /error/404.html;
-    error_page  500 502 503 504 /error/50x.html;
-
-    location /error/ {
-        alias   %home%/%user%/web/%domain%/document_errors/;
-    }
-
-    location ~* "/\.(htaccess|htpasswd)$" {
-        deny    all;
-        return  404;
-    }
+    # Include parameters common to all websites
+    include bx/conf//etc/nginx/bx/conf/bitrix.conf
 
     location /vstats/ {
         alias   %home%/%user%/web/%domain%/stats/;

@@ -1,7 +1,8 @@
+
 server {
-    listen      %ip%:%web_ssl_port%;
+    listen      %ip%:%web_ssl_port% ssl http2;
     server_name %domain_idn% %alias_idn%;
-    root        %sdocroot%;
+    root        %docroot%;
     index       index.php index.html index.htm;
     access_log  /var/log/nginx/domains/%domain%.log combined;
     access_log  /var/log/nginx/domains/%domain%.bytes bytes;
@@ -10,37 +11,29 @@ server {
     ssl         on;
     ssl_certificate      %ssl_pem%;
     ssl_certificate_key  %ssl_key%;
+    ssl_protocols TLSv1 TLSv1.1 TLSv1.2 TLSv1.3;
+    ssl_ciphers 'TLS13-CHACHA20-POLY1305-SHA256:TLS13-AES-128-GCM-SHA256:TLS13-AES-256-GCM-SHA384:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256:DHE-DSS-AES128-GCM-SHA256:kEDH+AESGCM:ECDHE-RSA-AES128-SHA256:ECDHE-ECDSA-AES128-SHA256:ECDHE-RSA-AES128-SHA:ECDHE-ECDSA-AES128-SHA:ECDHE-RSA-AES256-SHA384:ECDHE-ECDSA-AES256-SHA384:ECDHE-RSA-AES256-SHA:ECDHE-ECDSA-AES256-SHA:DHE-RSA-AES128-SHA256:DHE-RSA-AES128-SHA:DHE-DSS-AES128-SHA256:DHE-RSA-AES256-SHA256:DHE-DSS-AES256-SHA:DHE-RSA-AES256-SHA:AES128-GCM-SHA256:AES256-GCM-SHA384:AES128-SHA256:AES256-SHA256:AES128-SHA:AES256-SHA:AES:CAMELLIA:!aNULL:!eNULL:!EXPORT:!DES:!RC4:!MD5:!PSK:!aECDH:!EDH-DSS-DES-CBC3-SHA:!EDH-RSA-DES-CBC3-SHA:!KRB5-DES-CBC3-SHA';
+    ssl_prefer_server_ciphers on;
+    ssl_dhparam         /etc/nginx/ssl/dhparam.pem;
 
-    location / {
+    server_name_in_redirect off;
 
-        location ~* ^.+\.(jpeg|jpg|png|gif|bmp|ico|svg|css|js)$ {
-            expires     max;
-        }
+    proxy_set_header	X-Real-IP $remote_addr;
+    proxy_set_header	X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header	Host $host:80;
+    proxy_set_header    HTTPS YES;
+    proxy_set_header    X-Forwarded-Proto https;
 
-        location ~ [^/]\.php(/|$) {
-            fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
-            if (!-f $document_root$fastcgi_script_name) {
-                return  404;
-            }
+    set $proxyserver     "http://127.0.0.1:8888";
+    set $imcontenttype	"text/html; charset=utf-8";
+    set $docroot		"%docroot%";
+    proxy_ignore_client_abort off;
 
-            fastcgi_pass    %backend_lsnr%;
-            fastcgi_index   index.php;
-            include         /etc/nginx/fastcgi_params;
-        }
-    }
+    # Redirect to ssl if need
+    if (-f %docroot%/.htsecure) { rewrite ^(.*)$ https://$host$1 permanent; }
 
-    error_page  403 /error/404.html;
-    error_page  404 /error/404.html;
-    error_page  500 502 503 504 /error/50x.html;
-
-    location /error/ {
-        alias   %home%/%user%/web/%domain%/document_errors/;
-    }
-
-    location ~* "/\.(htaccess|htpasswd)$" {
-        deny    all;
-        return  404;
-    }
+    # Include parameters common to all websites
+    include bx/conf//etc/nginx/bx/conf/bitrix.conf
 
     location /vstats/ {
         alias   %home%/%user%/web/%domain%/stats/;
@@ -51,5 +44,5 @@ server {
     include     /etc/nginx/conf.d/phppgadmin.inc*;
     include     /etc/nginx/conf.d/webmail.inc*;
 
-    include     %home%/%user%/conf/web/snginx.%domain%.conf*;
+    include     %home%/%user%/conf/web/nginx.%domain%.conf*;
 }
