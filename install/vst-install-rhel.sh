@@ -17,18 +17,20 @@ os=$(cut -f 1 -d ' ' /etc/redhat-release)
 release=$(grep -o "[0-9]" /etc/redhat-release |head -n1)
 codename="${os}_$release"
 vestacp="$VESTA/install/$VERSION/$release"
+php_version="73"
 
 # Defining software pack for all distros
-software="nginx awstats bc bind bind-libs bind-utils clamav-server clamav-update
-    curl dovecot e2fsprogs exim expect fail2ban flex freetype ftp GeoIP httpd
-    ImageMagick iptables-services jwhois lsof mailx mariadb mariadb-server mc
-    mod_fcgid mod_ruid2 mod_ssl net-tools ntp openssh-clients pcre php
-    php-bcmath php-cli php-common php-fpm php-gd php-imap php-mbstring
-    php-mcrypt phpMyAdmin php-mysql php-pdo phpPgAdmin php-pgsql php-soap
-    php-tidy php-xml php-xmlrpc postgresql postgresql-contrib
-    postgresql-server proftpd roundcubemail rrdtool rsyslog screen
-    spamassassin sqlite sudo tar telnet unzip vesta vesta-ioncube vesta-nginx
-    vesta-php vesta-softaculous vim-common vsftpd webalizer which zip"
+software="awstats bc bind bind-libs bind-utils clamav-server clamav-update curl
+    dovecot e2fsprogs exim expect fail2ban flex freetype ftp GeoIP httpd
+    ImageMagick iptables-services jwhois lsof mailx mariadb mariadb-server
+    mc mod_fcgid mod_ruid2 mod_ssl net-tools bx-nginx ntp openssh-clients
+    pcre php php-bcmath php-cli php-common php-fpm php-gd php-imap php-mbstring
+    php-mcrypt php-mysql php-pdo php-pgsql php-soap php-tidy php-xml php-xmlrpc
+    php-json php-intl php-pecl-zip php-opcache php-mysqlnd php-pecl-imagick php-ldap
+    phpMyAdmin phpPgAdmin postgresql postgresql-contrib postgresql-server
+     proftpd roundcubemail rrdtool rsyslog screen spamassassin sqlite sudo tar telnet
+    unzip vesta-ioncube vesta-nginx vesta-php vesta-softaculous
+    vim-common vsftpd webalizer which zip catdoc xls2csv"
 
 # Fix for old releases
 if [ "$release" -lt 7 ]; then
@@ -461,13 +463,14 @@ if [ "$remi" = 'yes' ] && [ ! -e "/etc/yum.repos.d/remi.repo" ]; then
     sed -i "s/enabled=0/enabled=1/g" /etc/yum.repos.d/remi.repo
 fi
 
-# Installing Nginx repository
-nrepo="/etc/yum.repos.d/nginx.repo"
-echo "[nginx]" > $nrepo
-echo "name=nginx repo" >> $nrepo
-echo "baseurl=http://nginx.org/packages/centos/$release/\$basearch/" >> $nrepo
-echo "gpgcheck=0" >> $nrepo
-echo "enabled=1" >> $nrepo
+# Installing MariaDB repository
+mrepo="/etc/yum.repos.d/mariadb.repo"
+echo "[mariadb]" >> $mrepo
+echo "name = MariaDB" >> $mrepo
+echo "baseurl = http://yum.mariadb.org/10.4/centos7-amd64" >> $mrepo
+echo "gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-MARIADB" >> $mrepo
+echo "gpgcheck=1" >> $mrepo
+wget "https://yum.mariadb.org/RPM-GPG-KEY-MariaDB" -O /etc/pki/rpm-gpg/RPM-GPG-KEY-MARIADB
 
 # Installing Vesta repository
 vrepo='/etc/yum.repos.d/vesta.repo'
@@ -479,6 +482,16 @@ echo "gpgcheck=1" >> $vrepo
 echo "gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-VESTA" >> $vrepo
 wget c.vestacp.com/GPG.txt -O /etc/pki/rpm-gpg/RPM-GPG-KEY-VESTA
 
+# Installing Bitrix repository
+brepo="/etc/yum.repos.d/bitrix.repo"
+echo "[bitrix]" > $brepo
+echo "name=\$OS \$releasever - \$basearch" >> $brepo
+echo "baseurl=http://repos.1c-bitrix.ru/yum/el/$release/\$basearch" >> $brepo
+echo "failovermethod=priority" >> $brepo
+echo "gpgcheck=1" >> $brepo
+echo "enabled=1" >> $brepo
+echo "gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-BITRIX" >> $brepo
+wget "http://repos.1c-bitrix.ru/yum/RPM-GPG-KEY-BitrixEnv" -O /etc/pki/rpm-gpg/RPM-GPG-KEY-BITRIX
 
 #----------------------------------------------------------#
 #                         Backup                           #
@@ -873,6 +886,22 @@ if [ "$nginx" = 'yes' ]; then
     cp -f $vestacp/nginx/phppgadmin.inc /etc/nginx/conf.d/
     cp -f $vestacp/nginx/webmail.inc /etc/nginx/conf.d/
     cp -f $vestacp/logrotate/nginx /etc/logrotate.d/
+    mkdir /etc/nginx/bx/
+    mkdir /etc/nginx/bx/conf/
+    cp -f $vestacp/nginx/bx/conf/push-im_settings.conf /etc/nginx/bx/conf/push-im_settings.conf
+    ln -s /etc/nginx/bx/conf/push-im_settings.conf /etc/nginx/conf.d/im_settings.conf
+    cp -f $vestacp/nginx/bx/conf/general-add_header.conf /etc/nginx/bx/conf/general-add_header.conf
+    ln -s /etc/nginx/bx/conf/general-add_header.conf /etc/nginx/conf.d/general-add_header.conf
+    cp -f $vestacp/nginx/bx/conf/ssl.conf /etc/nginx/bx/conf/
+    cp -f $vestacp/nginx/bx/push-im_subscrider.conf /etc/nginx/bx/conf/
+    cp -f $vestacp/nginx/bx/bitrix_block.conf /etc/nginx/bx/conf/
+    cp -f $vestacp/nginx/bx/bitrix_general.conf /etc/nginx/bx/conf/
+    mkdir /etc/nginx/bx/maps/
+    cp -f $vestacp/nginx/bx/maps/composite_settings.conf /etc/nginx/bx/maps/composite_settings.conf
+    ln -s /etc/nginx/bx/maps/composite_settings.conf /etc/nginx/conf.d/composite_settings.conf
+    mkdir /etc/nginx/ssl/
+    openssl req  -nodes -new -x509  -keyout /etc/nginx/ssl/cert.key -out /etc/nginx/ssl/cert.crt -days 3650 -subj "/C=RU/ST=Moscow/L=Moscow/CN=$(hostname)"
+    openssl dhparam -dsaparam -out  /etc/nginx/ssl/dhparam.pem 4096
     echo > /etc/nginx/conf.d/vesta.conf
     mkdir -p /var/log/nginx/domains
     if [ "$release" -ge 7 ]; then
@@ -954,6 +983,9 @@ fi
 #                     Configure PHP                        #
 #----------------------------------------------------------#
 
+cp -f $vestacp/php/10-opcache.ini /etc/php.d/10-opcache.ini
+cp -f $vestacp/php/php.ini /etc/
+
 ZONE=$(timedatectl 2>/dev/null|grep Timezone|awk '{print $2}')
 if [ -e '/etc/sysconfig/clock' ]; then
     source /etc/sysconfig/clock
@@ -996,14 +1028,15 @@ fi
 #----------------------------------------------------------#
 
 if [ "$mysql" = 'yes' ]; then
-
-    mycnf="my-small.cnf"
-    if [ $memory -gt 1200000 ]; then
-        mycnf="my-medium.cnf"
-    fi
-    if [ $memory -gt 3900000 ]; then
-        mycnf="my-large.cnf"
-    fi
+# TODO: оптимизировать конфиг под разные параметры сервера
+    mycnf="my.cnf"
+#    mycnf="my-small.cnf"
+#    if [ $memory -gt 1200000 ]; then
+#        mycnf="my-medium.cnf"
+#    fi
+#    if [ $memory -gt 3900000 ]; then
+#        mycnf="my-large.cnf"
+#    fi
 
     mkdir -p /var/lib/mysql
     chown mysql:mysql /var/lib/mysql

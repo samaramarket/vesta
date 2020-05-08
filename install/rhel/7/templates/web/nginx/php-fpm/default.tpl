@@ -1,13 +1,78 @@
 server {
+
+    set $docroot "%docroot%";
+
     listen      %ip%:%web_port%;
     server_name %domain_idn% %alias_idn%;
-    root        %docroot%;
+    root        $docroot;
     index       index.php index.html index.htm;
     access_log  /var/log/nginx/domains/%domain%.log combined;
     access_log  /var/log/nginx/domains/%domain%.bytes bytes;
     error_log   /var/log/nginx/domains/%domain%.error.log error;
 
+    set $backend_php = %backend_lsnr%;
+
+    # cache condition variable
+    set $usecache "";
+    if ($is_global_cache = 1)                     { set $usecache "${usecache}A"; }
+
+    if (-f $docroot/.htsecure) { rewrite ^(.*)$ https://$host$1 permanent; }
+
+    # main config without processing cache pages
+    include /etc/nginx/bx/conf/bitrix_general.conf;
+
+     # php file processing
+    location ~ \.php$ {
+
+        set $cache_file "bitrix/html_pages$general_key@$args.html";
+
+        # test file conditions
+        if (-f "$docroot/bitrix/html_pages/.enabled") { set $usecache "${usecache}B"; }
+        if (-f "$docroot/$cache_file")                { set $usecache "${usecache}C"; }
+        
+        # create rewrite if cache-file exists
+        if ($usecache = "ABC" ) { rewrite .* /$cache_file last; }
+
+        location ~ [^/]\.php(/|$) {
+            fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+            if (!-f $document_root$fastcgi_script_name) {
+                return  404;
+            }
+
+            fastcgi_pass    $backend_php;
+            fastcgi_index   index.php;
+            include         /etc/nginx/fastcgi_params;
+        }
+    }
+
+    location ~ /$ {
+    
+        set $cache_file "bitrix/html_pages$general_key/index@$args.html";
+
+        # test file conditions
+        if (-f "$docroot/bitrix/html_pages/.enabled") { set $usecache "${usecache}B"; }
+        if (-f "$docroot/$cache_file")                { set $usecache "${usecache}C"; }
+
+        # create rewrite if cache-file exists
+        if ($usecache = "ABC" ) { rewrite .* /$cache_file last; }
+
+        location ~ [^/]\.php(/|$) {
+            fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+            if (!-f $document_root$fastcgi_script_name) {
+                return  404;
+            }
+
+            fastcgi_pass    $backend_php;
+            fastcgi_index   index.php;
+            include         /etc/nginx/fastcgi_params;
+        }
+    }
+
     location / {
+
+        if (!-e $request_filename){
+   		    rewrite ^(.*)$ /bitrix/urlrewrite.php break;
+	    }
 
         location ~* ^.+\.(jpeg|jpg|png|gif|bmp|ico|svg|css|js)$ {
             expires     max;
@@ -19,11 +84,12 @@ server {
                 return  404;
             }
 
-            fastcgi_pass    %backend_lsnr%;
+            fastcgi_pass    $backend_php;
             fastcgi_index   index.php;
             include         /etc/nginx/fastcgi_params;
         }
     }
+
 
     error_page  403 /error/404.html;
     error_page  404 /error/404.html;
@@ -31,11 +97,6 @@ server {
 
     location /error/ {
         alias   %home%/%user%/web/%domain%/document_errors/;
-    }
-
-    location ~* "/\.(htaccess|htpasswd)$" {
-        deny    all;
-        return  404;
     }
 
     location /vstats/ {
