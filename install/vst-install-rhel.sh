@@ -460,7 +460,9 @@ check_result $? "Can't install EPEL repository"
 if [ "$remi" = 'yes' ] && [ ! -e "/etc/yum.repos.d/remi.repo" ]; then
     rpm -Uvh http://rpms.remirepo.net/enterprise/remi-release-$release.rpm
     check_result $? "Can't install REMI repository"
-    sed -i "s/enabled=0/enabled=1/g" /etc/yum.repos.d/remi.repo
+    #sed -i "s/enabled=0/enabled=1/g" /etc/yum.repos.d/remi.repo
+    p_remi_php=$(grep "\[remi-php$php_version\]" /etc/yum.repos.d/ -Rl)
+    sed "/^\[remi-php$php_version\]$/,/^\[/ s/^enabled=0/enabled=1/" -i $p_remi_php
 fi
 
 # Installing MariaDB repository
@@ -471,6 +473,7 @@ echo "baseurl = http://yum.mariadb.org/10.4/centos7-amd64" >> $mrepo
 echo "gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-MARIADB" >> $mrepo
 echo "gpgcheck=1" >> $mrepo
 wget "https://yum.mariadb.org/RPM-GPG-KEY-MariaDB" -O /etc/pki/rpm-gpg/RPM-GPG-KEY-MARIADB
+rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-MARIADB
 
 # Installing Vesta repository
 vrepo='/etc/yum.repos.d/vesta.repo'
@@ -481,6 +484,7 @@ echo "enabled=1" >> $vrepo
 echo "gpgcheck=1" >> $vrepo
 echo "gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-VESTA" >> $vrepo
 wget c.vestacp.com/GPG.txt -O /etc/pki/rpm-gpg/RPM-GPG-KEY-VESTA
+rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-VESTA
 
 # Installing Bitrix repository
 brepo="/etc/yum.repos.d/bitrix.repo"
@@ -492,7 +496,7 @@ echo "gpgcheck=1" >> $brepo
 echo "enabled=1" >> $brepo
 echo "gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-BITRIX" >> $brepo
 wget "http://repos.1c-bitrix.ru/yum/RPM-GPG-KEY-BitrixEnv" -O /etc/pki/rpm-gpg/RPM-GPG-KEY-BITRIX
-
+rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-BITRIX
 #----------------------------------------------------------#
 #                         Backup                           #
 #----------------------------------------------------------#
@@ -574,7 +578,7 @@ mv $VESTA/conf/* $vst_backups/vesta > /dev/null 2>&1
 
 # Excluding packages
 if [ "$nginx" = 'no'  ]; then
-    software=$(echo "$software" | sed -e "s/^nginx//")
+    software=$(echo "$software" | sed -e "s/^bx-nginx//")
 fi
 if [ "$apache" = 'no' ]; then
     software=$(echo "$software" | sed -e "s/httpd//")
