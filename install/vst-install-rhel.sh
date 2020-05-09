@@ -897,9 +897,9 @@ if [ "$nginx" = 'yes' ]; then
     cp -f $vestacp/nginx/bx/conf/general-add_header.conf /etc/nginx/bx/conf/general-add_header.conf
     ln -s /etc/nginx/bx/conf/general-add_header.conf /etc/nginx/conf.d/general-add_header.conf
     cp -f $vestacp/nginx/bx/conf/ssl.conf /etc/nginx/bx/conf/
-    cp -f $vestacp/nginx/bx/push-im_subscrider.conf /etc/nginx/bx/conf/
-    cp -f $vestacp/nginx/bx/bitrix_block.conf /etc/nginx/bx/conf/
-    cp -f $vestacp/nginx/bx/bitrix_general.conf /etc/nginx/bx/conf/
+    cp -f $vestacp/nginx/bx/conf/push-im_subscrider.conf /etc/nginx/bx/conf/
+    cp -f $vestacp/nginx/bx/conf/bitrix_block.conf /etc/nginx/bx/conf/
+    cp -f $vestacp/nginx/bx/conf/bitrix_general.conf /etc/nginx/bx/conf/
     mkdir /etc/nginx/bx/maps/
     cp -f $vestacp/nginx/bx/maps/composite_settings.conf /etc/nginx/bx/maps/composite_settings.conf
     ln -s /etc/nginx/bx/maps/composite_settings.conf /etc/nginx/conf.d/composite_settings.conf
