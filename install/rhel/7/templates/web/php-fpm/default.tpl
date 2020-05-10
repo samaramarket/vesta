@@ -1,9 +1,12 @@
 [%backend%]
-listen = 127.0.0.1:%backend_port%
+listen = /var/run/php-%backend%.sock
 listen.allowed_clients = 127.0.0.1
 
 user = %user%
 group = %user%
+
+listen.owner = %user%
+listen.group = nginx
 
 pm = ondemand
 pm.max_children = 4

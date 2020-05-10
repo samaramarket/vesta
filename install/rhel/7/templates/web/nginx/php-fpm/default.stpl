@@ -14,7 +14,7 @@ server {
     ssl_certificate      %ssl_pem%;
     ssl_certificate_key  %ssl_key%;
 
-    set $backend_php = %backend_lsnr%;
+    set $backend_php "%backend_lsnr%";
 
     # cache condition variable
     set $usecache "";
