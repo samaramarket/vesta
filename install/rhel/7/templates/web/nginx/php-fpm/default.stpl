@@ -25,6 +25,24 @@ server {
     # main config without processing cache pages
     include /etc/nginx/bx/conf/bitrix_general.conf;
 
+    try_files $uri $uri/ /index.php?$query_string;
+    
+    location @fallback {
+        
+        set $cache_file "bitrix/html_pages$general_key@$args.html";
+        
+        # test file conditions
+        if (-f "$docroot/bitrix/html_pages/.enabled") { set $usecache "${usecache}B"; }
+        if (-f "$docroot/$cache_file")                { set $usecache "${usecache}C"; }
+        
+        # create rewrite if cache-file exists
+        if ($usecache = "ABC" ) { rewrite .* /$cache_file last; }
+
+        include fastcgi_params;
+        fastcgi_param SCRIPT_FILENAME $document_root/bitrix/urlrewrite.php;
+        fastcgi_pass $backend_php;
+     }
+
      # php file processing
     location ~ \.php$ {
 
@@ -49,7 +67,7 @@ server {
         }
     }
 
-    location ~ /$ {
+    location / {
     
         set $cache_file "bitrix/html_pages$general_key/index@$args.html";
 
@@ -72,31 +90,9 @@ server {
         }
     }
 
-    location / {
-
-        if (!-e $request_filename){
-   		    rewrite ^(.*)$ /bitrix/urlrewrite.php break;
-	    }
-
-        location ~* ^.+\.(jpeg|jpg|png|gif|bmp|ico|svg|css|js)$ {
-            expires     max;
-        }
-
-        location ~ [^/]\.php(/|$) {
-            fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
-            if (!-f $document_root$fastcgi_script_name) {
-                return  404;
-            }
-
-            fastcgi_pass    $backend_php;
-            fastcgi_index   index.php;
-            include         /etc/nginx/fastcgi_params;
-        }
-    }
-
 
     error_page  403 /error/404.html;
-    error_page  404 /error/404.html;
+    error_page  404 = @fallback;
     error_page  500 502 503 504 /error/50x.html;
 
     location /error/ {
