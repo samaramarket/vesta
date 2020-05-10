@@ -1339,10 +1339,11 @@ if [ ! -z "$pub_ip" ] && [ "$pub_ip" != "$ip" ]; then
     ip=$pub_ip
 fi
 
+mysql_pass=$(gen_pass)
 # Configuring MySQL/MariaDB host
 if [ "$mysql" = 'yes' ]; then
     $VESTA/bin/v-add-database-host mysql localhost root $mpass
-    $VESTA/bin/v-add-database admin default default $(gen_pass) mysql
+    $VESTA/bin/v-add-database admin default default $(mysql_pass) mysql
 fi
 
 # Configuring PostgreSQL host
@@ -1353,6 +1354,19 @@ fi
 
 # Adding default domain
 $VESTA/bin/v-add-domain admin $servername
+mkdir -p /home/admin/
+mkdir -p /home/admin/web/$servername/public_html/bitrix/php_interface/
+cp -f $vestacp/bitrix/.settings.php /home/admin/web/$servername/public_html/bitrix/
+cp -f $vestacp/bitrix/dbconn.php /home/admin/web/$servername/public_html/bitrix/php_interface/
+
+sed "s/__LOGIN__/admin_default/g" -i /home/admin/web/$servername/public_html/bitrix/php_interface/dbconn.php
+sed "s/__DATABASE__/admin_default/g" -i /home/admin/web/$servername/public_html/bitrix/php_interface/dbconn.php
+sed "s/__PASSWORD__/$mysql_pass/g" -i /home/admin/web/$servername/public_html/bitrix/php_interface/dbconn.php
+
+
+sed "s/__LOGIN__/admin_default/g" -i /home/admin/web/$servername/public_html/bitrix/.settings.php
+sed "s/__DATABASE__/admin_default/g" -i /home/admin/web/$servername/public_html/bitrix/.settings.php
+sed "s/__PASSWORD__/$mysql_pass/g" -i /home/admin/web/$servername/public_html/bitrix/.settings.php
 
 # Adding cron jobs
 command="sudo $VESTA/bin/v-update-sys-queue disk"

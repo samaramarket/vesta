@@ -84,6 +84,8 @@ sudo -u $user cp -r $WEBTPL/skel/* $HOMEDIR/$user/web/$domain/ >/dev/null 2>&1
 for file in $(find "$HOMEDIR/$user/web/$domain/" -type f); do
     sed -i "s/%domain%/$domain/g" $file
 done
+wget "http://www.1c-bitrix.ru/download/scripts/restore.php" -O "$HOMEDIR/$user/web/$domain/public_html/restore.php"
+wget "https://www.1c-bitrix.ru/download/scripts/bitrixsetup.php" -O "$HOMEDIR/$user/web/$domain/public_html/bitrixsetup.php"
 
 # Changing file owner & permission
 chown -R $user:$user $HOMEDIR/$user/web/$domain
