@@ -1359,6 +1359,8 @@ mkdir -p /home/admin/web/$servername/public_html/bitrix/php_interface/
 cp -f $vestacp/bitrix/.settings.php /home/admin/web/$servername/public_html/bitrix/
 cp -f $vestacp/bitrix/dbconn.php /home/admin/web/$servername/public_html/bitrix/php_interface/
 
+chown admin:admin /home/admin/web/$servername/public_html/bitrix/ -R
+
 sed "s/__LOGIN__/admin_default/g" -i /home/admin/web/$servername/public_html/bitrix/php_interface/dbconn.php
 sed "s/__DATABASE__/admin_default/g" -i /home/admin/web/$servername/public_html/bitrix/php_interface/dbconn.php
 sed "s/__PASSWORD__/$mysql_pass/g" -i /home/admin/web/$servername/public_html/bitrix/php_interface/dbconn.php
