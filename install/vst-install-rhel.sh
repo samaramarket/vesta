@@ -76,13 +76,7 @@ help() {
 
 # Defining password-gen function
 gen_pass() {
-    MATRIX='0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
-    LENGTH=10
-    while [ ${n:=1} -le $LENGTH ]; do
-        PASS="$PASS${MATRIX:$(($RANDOM%${#MATRIX})):1}"
-        let n+=1
-    done
-    echo "$PASS"
+    < /dev/urandom tr -dc A-Za-z0-9 | head -c${1:-10};echo;
 }
 
 # Defining return code check function
@@ -1343,7 +1337,7 @@ mysql_pass=$(gen_pass)
 # Configuring MySQL/MariaDB host
 if [ "$mysql" = 'yes' ]; then
     $VESTA/bin/v-add-database-host mysql localhost root $mpass
-    $VESTA/bin/v-add-database admin default default $(mysql_pass) mysql
+    $VESTA/bin/v-add-database admin default default $mysql_pass mysql
 fi
 
 # Configuring PostgreSQL host
